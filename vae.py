@@ -7,17 +7,17 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
 
         # Encoder layers
-        self.encoder_conv1 = nn.Conv3d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1)
-        self.encoder_conv2 = nn.Conv3d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
-        self.encoder_fc1 = nn.Linear(32 * 64 * 18, 256)
+        self.encoder_conv1 = nn.Conv3d(in_channels=1, out_channels=4, kernel_size=2, stride=2, padding=0)
+        self.encoder_conv2 = nn.Conv3d(in_channels=4, out_channels=8, kernel_size=4, stride=4, padding=0)
+        self.encoder_fc1 = nn.Linear(262144, 256)
         self.encoder_fc21 = nn.Linear(256, latent_dim)
         self.encoder_fc22 = nn.Linear(256, latent_dim)
 
         # Decoder layers
         self.decoder_fc3 = nn.Linear(latent_dim, 256)
-        self.decoder_fc4 = nn.Linear(256, 32 * 64 * 18)
-        self.decoder_conv3 = nn.ConvTranspose3d(in_channels=32, out_channels=16, kernel_size=4, stride=2, padding=1, output_padding=1)
-        self.decoder_conv4 = nn.ConvTranspose3d(in_channels=16, out_channels=1, kernel_size=4, stride=2, padding=1, output_padding=1)
+        self.decoder_fc4 = nn.Linear(256, 262144)
+        self.decoder_conv3 = nn.ConvTranspose3d(in_channels=8, out_channels=4, kernel_size=4, stride=4, padding=2, output_padding=3)
+        self.decoder_conv4 = nn.ConvTranspose3d(in_channels=4, out_channels=1, kernel_size=4, stride=2, padding=0, output_padding=0)
 
     def encode(self, x):
         x = F.relu(self.encoder_conv1(x))
@@ -36,7 +36,7 @@ class VAE(nn.Module):
     def decode(self, z):
         x = F.relu(self.decoder_fc3(z))
         x = F.relu(self.decoder_fc4(x))
-        x = x.view(x.size(0), 32, 64, 18)
+        x = x.view(x.size(0), 8, 32, 32, 32)
         x = F.relu(self.decoder_conv3(x))
         x = torch.sigmoid(self.decoder_conv4(x))
         return x
