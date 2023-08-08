@@ -13,7 +13,7 @@ class MATPaddedDataset(data.Dataset):
     def __getitem__(self, index):
         mat_file = self.file_list[index]
         mat_data = sio.loadmat(os.path.join(self.data_folder, mat_file))
-        volume = mat_data['new_T00']  # Assuming the data is stored under the key 'T00'
+        volume = mat_data['new_data']  # Assuming the data is stored under the key 'T00'
 
         # Normalize the data to [0, 1]
         volume = (volume - volume.min()) / (volume.max() - volume.min())
@@ -30,14 +30,20 @@ class MATPaddedDataset(data.Dataset):
 
 # Assuming you have a folder 'data_folder' containing the .mat files
 data_folder = 'C:\\Users\ericc\PycharmProjects\VAE_10000\inputMATfiles'
-test_folder = 'C:\\Users\ericc\PycharmProjects\VAE_10000\\testMATfiles'
+
 
 # Assuming you already know the maximum depth of all volumes in the dataset
 
 # Create the MATPaddedDataset and DataLoader
 batch_size = 3
 dataset = MATPaddedDataset(data_folder)
-testset = MATPaddedDataset(test_folder)
-train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-valid_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-test_loader = DataLoader(testset, batch_size=batch_size, shuffle=True, num_workers=0)
+data_samples = dataset.__len__()
+train_samples = round(data_samples * 0.8)
+validation_samples = round(data_samples * 0.1)
+test_samples = data_samples - (train_samples + validation_samples)
+train_Set, val_Set, test_Set = torch.utils.data.random_split(
+        dataset, [train_samples, validation_samples, test_samples], generator=torch.Generator().manual_seed(85210))
+
+train_loader = DataLoader(train_Set, batch_size=batch_size, shuffle=True, num_workers=0)
+valid_loader = DataLoader(val_Set, batch_size=batch_size, shuffle=True, num_workers=0)
+test_loader = DataLoader(test_Set, batch_size=batch_size, shuffle=True, num_workers=0)
